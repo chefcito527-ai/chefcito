@@ -5,29 +5,37 @@ Proyecto Flask que genera recetas con Google Gemini usando ingredientes del usua
 ## Preparación local
 
 1. Clona el repositorio.
+
 2. Crea y activa un entorno virtual:
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
+   **En Windows (PowerShell):**
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+
+   **En Linux/macOS (bash/zsh):**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
 3. Instala dependencias:
 
-```powershell
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 4. Crea un archivo `.env` basado en `.env.example` y ajusta:
 
-- `DATABASE_URL`
-- `SECRET_KEY`
+   - `DATABASE_URL`
+   - `SECRET_KEY`
 
 5. Ejecuta la app localmente:
 
-```powershell
-python app.py
-```
+   ```bash
+   python app.py
+   ```
 
 ## Despliegue en PythonAnywhere
 
