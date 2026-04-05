@@ -37,31 +37,23 @@ Proyecto Flask que genera recetas con Google Gemini usando ingredientes del usua
    python app.py
    ```
 
-## Despliegue en PythonAnywhere
+## Despliegue en Render
 
-1. Sube el proyecto a PythonAnywhere (por SFTP, Git o ZIP).
-2. En el panel "Web" de PythonAnywhere, crea una nueva aplicación Flask con Python 3.11 o 3.12.
-3. Configura el WSGI para usar el archivo `wsgi.py`:
+1. Conecta tu repositorio de GitHub a Render.
 
-```python
-import sys
-path = '/home/tu_usuario/path/al/proyecto'
-if path not in sys.path:
-    sys.path.insert(0, path)
+2. Crea una nueva Web Service con las siguientes configuraciones:
 
-from wsgi import application
-```
+   - **Environment**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:application --bind 0.0.0.0:$PORT`
+   - **Environment Variables**:
+     - `DATABASE_URL`: Tu URL de PostgreSQL
+     - `SECRET_KEY`: Una clave secreta segura
+     - `PYTHON_VERSION`: 3.11.0 (o la versión que uses)
 
-4. En la pestaña "Environment variables" del sitio web, define:
+3. Render detectará automáticamente el puerto desde `$PORT`.
 
-- `DATABASE_URL` con la URL de tu base de datos PostgreSQL
-- `SECRET_KEY` con una clave secreta segura
-
-5. Asegúrate de que `python-dotenv` está instalado si mantienes un archivo `.env`, o usa variables de entorno directamente.
-
-6. En la pestaña "Static files" de PythonAnywhere, apunta `/static/` al directorio `static/` de tu proyecto.
-
-7. Recarga la aplicación desde el panel "Web".
+4. Tu app estará disponible en la URL proporcionada por Render.
 
 ## Notas importantes
 
