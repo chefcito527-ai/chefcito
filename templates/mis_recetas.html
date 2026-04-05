@@ -1,0 +1,743 @@
+{% extends "base.html" %}
+{% block title %}Mis Recetas — Chefcito{% endblock %}
+
+{% block extra_head %}
+<style>
+  .recipe-card {
+    background: rgba(16, 14, 11, 0.85);
+    border: 1px solid rgba(184, 134, 30, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .recipe-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(184, 134, 30, 0.28);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(184, 134, 30, 0.08);
+  }
+
+  .recipe-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(184, 134, 30, 0.03), transparent 50%);
+    opacity: 0;
+    transition: opacity 0.35s;
+    pointer-events: none;
+  }
+
+  .recipe-card:hover::after {
+    opacity: 1;
+  }
+
+  .filter-input {
+    background: rgba(12, 11, 9, 0.7);
+    border: 1px solid rgba(184, 134, 30, 0.15);
+    border-radius: 10px;
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    color: #f2ece0;
+    font-size: 0.875rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .filter-input::placeholder {
+    color: rgba(230, 219, 200, 0.25);
+  }
+
+  .filter-input:focus {
+    outline: none;
+    border-color: rgba(184, 134, 30, 0.4);
+    box-shadow: 0 0 0 3px rgba(184, 134, 30, 0.08);
+  }
+
+  .filter-select {
+    background: rgba(12, 11, 9, 0.7);
+    border: 1px solid rgba(184, 134, 30, 0.15);
+    border-radius: 10px;
+    padding: 0.625rem 2rem 0.625rem 1rem;
+    color: rgba(230, 219, 200, 0.65);
+    font-size: 0.875rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    cursor: pointer;
+    appearance: none;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: rgba(184, 134, 30, 0.4);
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-up {
+    animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Modal */
+  #modal-receta {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(5, 4, 3, 0.82);
+    backdrop-filter: blur(14px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div
+  style="max-width:1100px; width:100%; margin:0 auto; padding:3rem 1.5rem 5rem; flex:1; position:relative; z-index:1;">
+
+  <!-- Ambient glow -->
+  <div style="
+    position:absolute; top:0; right:0;
+    width:400px; height:300px;
+    background:radial-gradient(ellipse, rgba(184,134,30,0.05), transparent 70%);
+    pointer-events:none;
+  "></div>
+
+  <!-- Page header -->
+  <div class="fade-up"
+    style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:1.5rem; margin-bottom:3rem;">
+    <div>
+      <p
+        style="font-size:0.7rem; color:rgba(184,134,30,0.6); text-transform:uppercase; letter-spacing:0.18em; font-weight:600; margin-bottom:0.5rem;">
+        Tu colección</p>
+      <h1 style="
+        font-family:'Cormorant Garamond',serif;
+        font-size:clamp(2rem,5vw,3rem);
+        font-weight:600; color:#f2ece0;
+        line-height:1.1; margin-bottom:0.5rem;
+      ">
+        Mis <em style="font-style:italic; color:rgba(232,193,90,0.85);">Recetas</em>
+      </h1>
+      <p style="font-size:0.875rem; color:rgba(230,219,200,0.35); font-weight:300;">
+        {{ recetas|length }} receta{{ 's' if recetas|length != 1 else '' }} en tu colección
+      </p>
+    </div>
+    <a href="{{ url_for('recetas') }}" style="
+      display:inline-flex; align-items:center; gap:0.5rem;
+      padding:0.75rem 1.5rem;
+      border-radius:10px;
+      background:linear-gradient(135deg, #d4a43a, #b8861e);
+      border:1px solid rgba(232,193,90,0.4);
+      color:#0c0b09;
+      font-family:'DM Sans',sans-serif;
+      font-size:0.875rem; font-weight:700;
+      text-decoration:none;
+      box-shadow:0 4px 16px rgba(184,134,30,0.2);
+      transition:all 0.25s;
+      flex-shrink:0;
+    " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(184,134,30,0.35)'"
+      onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 16px rgba(184,134,30,0.2)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Nueva receta
+    </a>
+  </div>
+
+  {% if recetas %}
+  <!-- Filter bar -->
+  <div style="
+    background:rgba(16,14,11,0.7);
+    border:1px solid rgba(184,134,30,0.1);
+    border-radius:14px;
+    padding:1rem 1.25rem;
+    margin-bottom:2rem;
+    display:flex; flex-wrap:wrap; gap:0.875rem; align-items:center;
+  ">
+    <!-- Search -->
+    <div style="position:relative; flex:1; min-width:200px;">
+      <div style="position:absolute; left:0.875rem; top:50%; transform:translateY(-50%); pointer-events:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.45)" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </div>
+      <input type="text" id="buscador-recetas" placeholder="Buscar por nombre..." class="filter-input">
+    </div>
+
+    <!-- Difficulty filter -->
+    <div style="position:relative;">
+      <select id="filtro-dificultad" class="filter-select" style="padding-right:2rem;">
+        <option value="">Todos los niveles</option>
+        <option value="Fácil">Fácil</option>
+        <option value="Medio">Medio</option>
+        <option value="Difícil">Difícil</option>
+      </select>
+      <div style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); pointer-events:none;">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)" stroke-width="2">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Saved toggle -->
+    <button id="btn-solo-guardadas" type="button" style="
+      display:inline-flex; align-items:center; gap:0.5rem;
+      padding:0.625rem 1rem;
+      border-radius:10px;
+      background:rgba(12,11,9,0.5);
+      border:1px solid rgba(184,134,30,0.15);
+      color:rgba(230,219,200,0.5);
+      font-family:'DM Sans',sans-serif;
+      font-size:0.825rem; font-weight:600;
+      cursor:pointer; white-space:nowrap;
+      transition:all 0.2s;
+    ">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      </svg>
+      <span id="label-guardadas">Solo guardadas</span>
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- Empty state -->
+  {% if not recetas %}
+  <div style="
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:8rem 2rem; text-align:center;
+  ">
+    <div style="
+      width:80px; height:80px; border-radius:50%;
+      background:rgba(184,134,30,0.06);
+      border:1px solid rgba(184,134,30,0.15);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:2rem;
+    ">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.4)" stroke-width="1.25">
+        <path
+          d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+        <line x1="6" y1="17" x2="18" y2="17" />
+      </svg>
+    </div>
+    <h2
+      style="font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:600; color:#f2ece0; margin-bottom:0.75rem;">
+      Tu colección está vacía</h2>
+    <p
+      style="font-size:0.9rem; color:rgba(230,219,200,0.35); max-width:380px; line-height:1.7; font-weight:300; margin-bottom:2.5rem;">
+      Genera tu primera receta con los ingredientes que tienes en casa y guárdala aquí.
+    </p>
+    <a href="{{ url_for('recetas') }}" style="
+      display:inline-flex; align-items:center; gap:0.5rem;
+      padding:0.875rem 2rem;
+      border-radius:12px;
+      background:linear-gradient(135deg, #d4a43a, #b8861e);
+      border:1px solid rgba(232,193,90,0.4);
+      color:#0c0b09;
+      font-family:'DM Sans',sans-serif;
+      font-size:0.9rem; font-weight:700;
+      text-decoration:none;
+      box-shadow:0 4px 20px rgba(184,134,30,0.25);
+      transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    " onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 32px rgba(184,134,30,0.4)'"
+      onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(184,134,30,0.25)'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+      Comenzar a cocinar
+    </a>
+  </div>
+
+  {% else %}
+
+  <!-- Recipe grid -->
+  <div id="grid-recetas" style="
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:1.25rem;
+  ">
+    {% for receta in recetas %}
+    <article class="recipe-card receta-card" data-titulo="{{ receta.titulo_plato | lower }}"
+      data-dificultad="{{ receta.nivel_dificultad or '' }}"
+      data-guardada="{{ 'true' if receta.guardada else 'false' }}">
+
+      <!-- Card header -->
+      <div style="
+        padding:1.5rem 1.5rem 1.25rem;
+        background:linear-gradient(135deg, rgba(184,134,30,0.05), transparent);
+        border-bottom:1px solid rgba(184,134,30,0.08);
+        position:relative;
+      ">
+        <!-- Difficulty + save button row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.875rem;">
+
+          <span class="badge-dificultad
+    {% if receta.nivel_dificultad == 'Fácil' %}badge-facil
+    {% elif receta.nivel_dificultad == 'Difícil' %}badge-dificil
+    {% else %}badge-medio{% endif %}" style="
+      display:inline-flex; align-items:center; gap:0.4rem;
+      padding:0.25rem 0.75rem;
+      border-radius:100px;
+      font-size:0.7rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.08em;
+      font-family:'DM Sans',sans-serif;
+    ">
+            <span style="width:4px; height:4px; border-radius:50%; background:currentColor; flex-shrink:0;"></span>
+            {{ receta.nivel_dificultad or 'Sin nivel' }}
+          </span>
+
+          <button
+            class="btn-guardar {% if receta.guardada %}btn-guardar-active{% else %}btn-guardar-inactive{% endif %}"
+            style="
+      width:32px; height:32px; border-radius:8px;
+      background:transparent;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      transition:all 0.2s;
+    " data-id="{{ receta.id }}" data-guardada="{{ 'true' if receta.guardada else 'false' }}"
+            title="{{ 'Quitar de guardados' if receta.guardada else 'Guardar receta' }}"
+            onmouseover="this.style.borderColor='rgba(184,134,30,0.4)';this.style.color='rgba(232,193,90,0.85)'"
+            onmouseout="if(this.dataset.guardada !== 'true'){this.style.borderColor='rgba(184,134,30,0.1)';this.style.color='rgba(230,219,200,0.3)'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="{{ 'currentColor' if receta.guardada else 'none' }}"
+              stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
+
+        </div>
+
+        <!-- Title -->
+        <h2 style="
+          font-family:'Cormorant Garamond',serif;
+          font-size:1.175rem; font-weight:600;
+          color:#f2ece0; line-height:1.3;
+          display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+          margin-bottom:0.625rem;
+        ">{{ receta.titulo_plato }}</h2>
+
+        <!-- Time -->
+        {% if receta.tiempo_estimado %}
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span style="font-size:0.775rem; color:rgba(230,219,200,0.3); font-weight:400;">{{ receta.tiempo_estimado
+            }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Card body: ingredient preview -->
+      <div style="padding:1.25rem 1.5rem; flex:1;">
+        <p
+          style="font-size:0.65rem; font-weight:700; color:rgba(184,134,30,0.45); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:0.75rem; font-family:'DM Sans',sans-serif;">
+          Ingredientes</p>
+        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.4rem;">
+          {% for ing in receta.lista_ingredientes[:4] %}
+          <li
+            style="display:flex; align-items:center; gap:0.5rem; font-size:0.825rem; color:rgba(230,219,200,0.5); font-weight:400;">
+            <span
+              style="width:4px; height:4px; border-radius:50%; background:rgba(184,134,30,0.5); flex-shrink:0;"></span>
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ ing }}</span>
+          </li>
+          {% endfor %}
+          {% if receta.lista_ingredientes|length > 4 %}
+          <li
+            style="font-size:0.75rem; color:rgba(230,219,200,0.25); font-weight:300; padding-left:0.625rem; font-style:italic;">
+            + {{ receta.lista_ingredientes|length - 4 }} ingredientes más
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <!-- Card footer -->
+      <div style="
+        padding:1rem 1.5rem;
+        border-top:1px solid rgba(184,134,30,0.08);
+        display:flex; align-items:center; justify-content:space-between; gap:0.75rem;
+      ">
+        <span style="font-size:0.725rem; color:rgba(230,219,200,0.2); font-weight:300;">
+          {{ receta.created_at.strftime('%d/%m/%Y') if receta.created_at else '' }}
+        </span>
+        <button class="btn-ver-receta" style="
+          display:inline-flex; align-items:center; gap:0.4rem;
+          padding:0.45rem 1rem;
+          border-radius:8px;
+          background:rgba(184,134,30,0.06);
+          border:1px solid rgba(184,134,30,0.18);
+          color:rgba(184,134,30,0.7);
+          font-family:'DM Sans',sans-serif;
+          font-size:0.775rem; font-weight:600;
+          cursor:pointer; transition:all 0.2s;
+        " data-id="{{ receta.id }}" data-receta='{{ receta | tojson }}'
+          onmouseover="this.style.background='rgba(184,134,30,0.12)';this.style.color='rgba(232,193,90,0.9)';this.style.borderColor='rgba(184,134,30,0.35)'"
+          onmouseout="this.style.background='rgba(184,134,30,0.06)';this.style.color='rgba(184,134,30,0.7)';this.style.borderColor='rgba(184,134,30,0.18)'">
+          Ver receta
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <!-- No results message -->
+  <div id="sin-resultados" style="
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    padding:5rem 2rem; text-align:center;
+  ">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.3)" stroke-width="1.25"
+      style="margin-bottom:1.25rem;">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+    <p style="font-size:0.9rem; color:rgba(230,219,200,0.3); font-weight:300; margin-bottom:1rem;">No se encontraron
+      recetas con esos filtros.</p>
+    <button id="btn-limpiar-filtros" style="
+      background:none; border:none; cursor:pointer;
+      font-family:'DM Sans',sans-serif;
+      font-size:0.8rem; font-weight:600;
+      color:rgba(184,134,30,0.6);
+      text-decoration:underline; text-underline-offset:3px;
+      transition:color 0.2s;
+    " onmouseover="this.style.color='rgba(232,193,90,0.85)'" onmouseout="this.style.color='rgba(184,134,30,0.6)'">
+      Limpiar filtros
+    </button>
+  </div>
+
+  {% endif %}
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: Ver receta completa
+══════════════════════════════════════════════════════ -->
+<div id="modal-receta" role="dialog" aria-modal="true">
+  <div style="
+    width:100%; max-width:680px;
+    background:rgba(16,14,11,0.97);
+    border:1px solid rgba(184,134,30,0.2);
+    border-radius:20px;
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    max-height:88vh;
+    box-shadow:0 32px 80px rgba(0,0,0,0.6);
+    position:relative;
+  ">
+    <!-- Top accent -->
+    <div
+      style="height:1px; background:linear-gradient(90deg, transparent, rgba(184,134,30,0.5), transparent); flex-shrink:0;">
+    </div>
+
+    <!-- Modal header -->
+    <div style="
+      padding:1.75rem 2rem 1.5rem;
+      border-bottom:1px solid rgba(184,134,30,0.1);
+      background:linear-gradient(135deg, rgba(184,134,30,0.05), transparent);
+      flex-shrink:0;
+      position:relative;
+    ">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;">
+        <div style="flex:1;">
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.875rem;">
+            <span id="modal-badge-dificultad" style="
+              display:inline-flex; align-items:center;
+              padding:0.25rem 0.75rem;
+              border-radius:100px;
+              background:rgba(184,134,30,0.08);
+              border:1px solid rgba(184,134,30,0.18);
+              font-size:0.7rem; font-weight:700;
+              color:rgba(184,134,30,0.75);
+              text-transform:uppercase; letter-spacing:0.08em;
+              font-family:'DM Sans',sans-serif;
+            "></span>
+            <span id="modal-badge-tiempo" style="
+              display:inline-flex; align-items:center; gap:0.4rem;
+              padding:0.25rem 0.75rem;
+              border-radius:100px;
+              background:rgba(12,11,9,0.5);
+              border:1px solid rgba(184,134,30,0.1);
+              font-size:0.7rem; font-weight:500;
+              color:rgba(230,219,200,0.4);
+              font-family:'DM Sans',sans-serif;
+            ">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)"
+                stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span id="modal-tiempo-text"></span>
+            </span>
+          </div>
+          <h2 id="modal-receta-titulo" style="
+            font-family:'Cormorant Garamond',serif;
+            font-size:1.625rem; font-weight:600;
+            color:#f2ece0; line-height:1.2; margin:0;
+          "></h2>
+        </div>
+        <button id="btn-cerrar-modal-receta" style="
+          flex-shrink:0; width:32px; height:32px; border-radius:8px;
+          background:rgba(20,18,15,0.6);
+          border:1px solid rgba(184,134,30,0.12);
+          color:rgba(230,219,200,0.4);
+          display:flex; align-items:center; justify-content:center;
+          cursor:pointer; transition:all 0.2s;
+        " onmouseover="this.style.color='rgba(230,219,200,0.8)';this.style.borderColor='rgba(184,134,30,0.3)'"
+          onmouseout="this.style.color='rgba(230,219,200,0.4)';this.style.borderColor='rgba(184,134,30,0.12)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal body -->
+    <div style="overflow-y:auto; flex:1;">
+      <div style="display:grid; grid-template-columns:1fr 1.6fr;">
+
+        <!-- Ingredients -->
+        <div style="padding:1.75rem 1.5rem; border-right:1px solid rgba(184,134,30,0.08);">
+          <p
+            style="font-size:0.65rem; font-weight:700; color:rgba(184,134,30,0.55); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:1rem; font-family:'DM Sans',sans-serif;">
+            Ingredientes</p>
+          <ul id="modal-ingredientes"
+            style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.5rem;"></ul>
+        </div>
+
+        <!-- Steps -->
+        <div style="padding:1.75rem 1.5rem;">
+          <p
+            style="font-size:0.65rem; font-weight:700; color:rgba(184,134,30,0.55); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:1rem; font-family:'DM Sans',sans-serif;">
+            Preparación</p>
+          <ol id="modal-pasos"
+            style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:1rem;"></ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal footer -->
+    <div style="
+      padding:1.25rem 2rem;
+      border-top:1px solid rgba(184,134,30,0.1);
+      background:rgba(12,11,9,0.4);
+      display:flex; align-items:center; justify-content:space-between; gap:0.75rem;
+      flex-shrink:0;
+    ">
+      <button id="btn-cerrar-modal-receta-2" style="
+        padding:0.65rem 1.25rem;
+        border-radius:8px;
+        background:rgba(20,18,15,0.5);
+        border:1px solid rgba(184,134,30,0.15);
+        color:rgba(230,219,200,0.5);
+        font-family:'DM Sans',sans-serif;
+        font-size:0.825rem; font-weight:600;
+        cursor:pointer; transition:all 0.2s;
+      " onmouseover="this.style.color='rgba(230,219,200,0.8)'" onmouseout="this.style.color='rgba(230,219,200,0.5)'">
+        Cerrar
+      </button>
+      <a href="{{ url_for('recetas') }}" style="
+        display:inline-flex; align-items:center; gap:0.5rem;
+        padding:0.65rem 1.375rem;
+        border-radius:8px;
+        background:linear-gradient(135deg, #d4a43a, #b8861e);
+        border:1px solid rgba(232,193,90,0.4);
+        color:#0c0b09;
+        font-family:'DM Sans',sans-serif;
+        font-size:0.825rem; font-weight:700;
+        text-decoration:none;
+        transition:all 0.25s;
+      " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 16px rgba(184,134,30,0.35)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        Generar nueva
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ── Filtros ──────────────────────────────────────────────
+    const buscador = document.getElementById('buscador-recetas');
+    const filtroDificultad = document.getElementById('filtro-dificultad');
+    const btnSoloGuardadas = document.getElementById('btn-solo-guardadas');
+    const sinResultados = document.getElementById('sin-resultados');
+    const cards = document.querySelectorAll('.receta-card');
+    let soloGuardadas = false;
+
+    function filtrar() {
+      if (!cards.length) return;
+      const texto = buscador ? buscador.value.toLowerCase().trim() : '';
+      const dificultad = filtroDificultad ? filtroDificultad.value : '';
+      let visibles = 0;
+
+      cards.forEach(card => {
+        const titulo = card.dataset.titulo || '';
+        const diff = card.dataset.dificultad || '';
+        const guardada = card.dataset.guardada === 'true';
+        const ok = (!texto || titulo.includes(texto))
+          && (!dificultad || diff === dificultad)
+          && (!soloGuardadas || guardada);
+        card.style.display = ok ? '' : 'none';
+        if (ok) visibles++;
+      });
+
+      if (sinResultados) {
+        sinResultados.style.display = visibles === 0 ? 'flex' : 'none';
+      }
+    }
+
+    if (buscador) buscador.addEventListener('input', filtrar);
+    if (filtroDificultad) filtroDificultad.addEventListener('change', filtrar);
+
+    if (btnSoloGuardadas) {
+      btnSoloGuardadas.addEventListener('click', () => {
+        soloGuardadas = !soloGuardadas;
+        btnSoloGuardadas.style.borderColor = soloGuardadas ? 'rgba(184,134,30,0.4)' : 'rgba(184,134,30,0.15)';
+        btnSoloGuardadas.style.color = soloGuardadas ? 'rgba(232,193,90,0.85)' : 'rgba(230,219,200,0.5)';
+        filtrar();
+      });
+    }
+
+    const btnLimpiarFiltros = document.getElementById('btn-limpiar-filtros');
+    if (btnLimpiarFiltros) {
+      btnLimpiarFiltros.addEventListener('click', () => {
+        if (buscador) buscador.value = '';
+        if (filtroDificultad) filtroDificultad.value = '';
+        soloGuardadas = false;
+        if (btnSoloGuardadas) {
+          btnSoloGuardadas.style.borderColor = 'rgba(184,134,30,0.15)';
+          btnSoloGuardadas.style.color = 'rgba(230,219,200,0.5)';
+        }
+        filtrar();
+      });
+    }
+
+    // ── Guardar / desguardar ────────────────────────────────
+    document.querySelectorAll('.btn-guardar').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const guardadaActual = btn.dataset.guardada === 'true';
+        const nuevaEstado = !guardadaActual;
+
+        try {
+          const res = await fetch(`/receta/${id}/guardar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guardada: nuevaEstado })
+          });
+
+          if (res.status === 401) { window.location.href = '/login'; return; }
+          if (!res.ok) throw new Error('Error al guardar');
+
+          btn.dataset.guardada = nuevaEstado ? 'true' : 'false';
+          const card = btn.closest('.receta-card');
+          if (card) card.dataset.guardada = nuevaEstado ? 'true' : 'false';
+
+          const svg = btn.querySelector('svg');
+          if (svg) svg.setAttribute('fill', nuevaEstado ? 'currentColor' : 'none');
+
+          btn.style.borderColor = nuevaEstado ? 'rgba(184,134,30,0.35)' : 'rgba(184,134,30,0.1)';
+          btn.style.color = nuevaEstado ? 'rgba(232,193,90,0.85)' : 'rgba(230,219,200,0.3)';
+
+          if (soloGuardadas) filtrar();
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    });
+
+    // ── Modal ver receta completa ───────────────────────────
+    const modal = document.getElementById('modal-receta');
+    const modalTitulo = document.getElementById('modal-receta-titulo');
+    const modalBadgeDificultad = document.getElementById('modal-badge-dificultad');
+    const modalBadgeTiempo = document.getElementById('modal-badge-tiempo');
+    const modalTiempoText = document.getElementById('modal-tiempo-text');
+    const modalIngredientes = document.getElementById('modal-ingredientes');
+    const modalPasos = document.getElementById('modal-pasos');
+
+    function abrirModal(receta) {
+      modalTitulo.textContent = receta.titulo_plato;
+      modalBadgeDificultad.textContent = receta.nivel_dificultad || '';
+      modalTiempoText.textContent = receta.tiempo_estimado || '';
+      modalBadgeTiempo.style.display = receta.tiempo_estimado ? '' : 'none';
+
+      modalIngredientes.innerHTML = '';
+      (receta.lista_ingredientes || []).forEach(ing => {
+        const li = document.createElement('li');
+        li.style.cssText = 'display:flex;align-items:center;gap:0.5rem;font-size:0.825rem;color:rgba(230,219,200,0.5);font-weight:400;font-family:DM Sans,sans-serif;padding:0.35rem 0;';
+        const dot = document.createElement('span');
+        dot.style.cssText = 'width:4px;height:4px;border-radius:50%;background:rgba(184,134,30,0.5);flex-shrink:0;';
+        const txt = document.createElement('span');
+        txt.textContent = ing;
+        li.appendChild(dot);
+        li.appendChild(txt);
+        modalIngredientes.appendChild(li);
+      });
+
+      modalPasos.innerHTML = '';
+      (receta.pasos_preparacion || []).forEach((paso, i) => {
+        const li = document.createElement('li');
+        li.style.cssText = 'display:flex;gap:0.875rem;align-items:flex-start;';
+        const num = document.createElement('span');
+        num.style.cssText = 'flex-shrink:0;width:24px;height:24px;border-radius:6px;background:rgba(184,134,30,0.1);border:1px solid rgba(184,134,30,0.2);display:flex;align-items:center;justify-content:center;font-family:Cormorant Garamond,serif;font-size:0.875rem;font-weight:700;color:rgba(184,134,30,0.75);margin-top:2px;';
+        num.textContent = i + 1;
+        const txt = document.createElement('span');
+        txt.style.cssText = 'font-size:0.875rem;color:rgba(230,219,200,0.55);line-height:1.7;font-weight:300;font-family:DM Sans,sans-serif;';
+        txt.textContent = paso;
+        li.appendChild(num);
+        li.appendChild(txt);
+        modalPasos.appendChild(li);
+      });
+
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModal() {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.btn-ver-receta').forEach(btn => {
+      btn.addEventListener('click', () => {
+        try {
+          const receta = JSON.parse(btn.dataset.receta);
+          abrirModal(receta);
+        } catch (e) { console.error('Error al parsear receta', e); }
+      });
+    });
+
+    ['btn-cerrar-modal-receta', 'btn-cerrar-modal-receta-2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', cerrarModal);
+    });
+
+    if (modal) modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+  });
+</script>
+{% endblock %}

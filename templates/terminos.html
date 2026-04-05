@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Términos y Condiciones — Chefcito{% endblock %}
+
+{% block extra_head %}
+<style>
+  .legal-container { max-width: 820px; margin: 0 auto; padding: 4rem 1.5rem 5rem; color: #f2ece0; }
+  .legal-header { text-align: center; margin-bottom: 3rem; }
+  .legal-header h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 600; margin-bottom: 0.8rem; color: #e8c15a; }
+  .legal-meta { color: rgba(230,219,200,0.5); font-size: 0.85rem; }
+  .legal-section { margin-bottom: 2.8rem; scroll-margin-top: 80px; }
+  .legal-section-number { display: inline-block; background: rgba(184,134,30,0.15); border: 1px solid rgba(184,134,30,0.4); color: rgba(232,193,90,0.9); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.7rem; border-radius: 100px; margin-bottom: 0.8rem; }
+  .legal-section h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #f2ece0; font-weight: 600; }
+  .legal-section p, .legal-section li { color: rgba(230,219,200,0.7); margin-bottom: 0.9rem; font-size: 0.95rem; line-height: 1.8; font-weight: 300; }
+  .legal-section ul, .legal-section ol { padding-left: 1.4rem; margin-bottom: 0.9rem; }
+  .highlight-box { background: rgba(184,134,30,0.05); border: 1px solid rgba(184,134,30,0.2); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.2rem 0; }
+  .highlight-box p { margin-bottom: 0; color: rgba(232,193,90,0.85); }
+  hr.legal-divider { border: none; border-top: 1px solid rgba(184,134,30,0.15); margin: 2rem 0; }
+  .legal-link { color: #d4a43a; text-decoration: none; transition: color 0.2s; }
+  .legal-link:hover { color: #f2ece0; text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="legal-container fade-up">
+  <div class="legal-header">
+    <div style="display:inline-block; background:rgba(184,134,30,0.1); border:1px solid rgba(184,134,30,0.25); color:rgba(232,193,90,0.85); font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; padding:0.3rem 0.9rem; border-radius:100px; margin-bottom:1.2rem;">Documento Legal</div>
+    <h1>Términos y Condiciones</h1>
+    <p class="legal-meta">Última actualización: Enero 2026</p>
+  </div>
+
+  <div class="legal-section" id="aceptacion">
+    <span class="legal-section-number">01</span>
+    <h2>Aceptación de los Términos</h2>
+    <p>Al acceder y utilizar Chefcito (en adelante, "el Servicio"), usted acepta estar vinculado por estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder al Servicio.</p>
+    <div class="highlight-box">
+      <p>El uso continuado del Servicio después de la publicación de cambios a estos términos constituye su aceptación de dichos cambios.</p>
+    </div>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="servicio">
+    <span class="legal-section-number">02</span>
+    <h2>Descripción del Servicio</h2>
+    <p>Chefcito es una plataforma web que permite a los usuarios generar recetas culinarias personalizadas mediante inteligencia artificial (Google Gemini), a partir de los ingredientes que el usuario proporciona.</p>
+    <p>El Servicio incluye:</p>
+    <ul>
+      <li>Generación de recetas mediante IA usando su propia API Key de Google Gemini.</li>
+      <li>Almacenamiento de recetas generadas en su cuenta personal.</li>
+      <li>Gestión y organización de recetas guardadas.</li>
+    </ul>
+    <p>Chefcito actúa como plataforma gestora y asistente. No somos proveedores del modelo de IA subyacente de Google.</p>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="cuenta">
+    <span class="legal-section-number">03</span>
+    <h2>Registro y Cuenta de Usuario</h2>
+    <p>Para acceder al Servicio deberá crear una cuenta proporcionando nombre completo, dirección de correo electrónico válida y contraseña.</p>
+    <p>Usted es responsable de mantener la confidencialidad de sus credenciales y de todas las actividades bajo su cuenta.</p>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="ia-y-recetas">
+    <span class="legal-section-number">04</span>
+    <h2>Contenido Generado y Propiedad</h2>
+    <p>Las recetas generadas por el Servicio son producidas por modelos de IA y están sujetas a variaciones:</p>
+    <ul>
+      <li>El contenido generado puede contener inexactitudes. Consúltelo con cuidado si tiene alergias u otras condiciones.</li>
+      <li><strong>Comercialización y Distribución:</strong> Nos reservamos el derecho de emplear, distribuir o comercializar de forma libre las recetas generadas en la plataforma. Estas recetas no comportan exclusividad ni derechos de autor sobre su formulación por parte del usuario.</li>
+      <li><strong>Publicidad:</strong> Chefcito se reserva el derecho de añadir publicidad (anuncios, patrocinios, etc.) en cualquier parte del sitio web.</li>
+    </ul>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="limite-responsabilidad">
+    <span class="legal-section-number">05</span>
+    <h2>Limitación de Responsabilidad</h2>
+    <p>En la máxima medida permitida por la ley aplicable, no seremos responsables por fallas, daños indirectos, interrupciones o cambios en el servicio, incluidos fallos de la API de Google Gemini o daños derivados de las recetas.</p>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="contacto">
+    <span class="legal-section-number">06</span>
+    <h2>Contacto</h2>
+    <p>Para preguntas sobre estos Términos y Condiciones, contáctenos en:</p>
+    <ul>
+      <li>Email: <a href="mailto:chefcito527@gmail.com" class="legal-link">chefcito527@gmail.com</a></li>
+    </ul>
+  </div>
+
+</div>
+{% endblock %}

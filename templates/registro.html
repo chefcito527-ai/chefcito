@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Crear Cuenta — Chefcito{% endblock %}
+
+{% block extra_head %}
+<style>
+  .auth-input {
+    width: 100%;
+    background: rgba(12, 11, 9, 0.7);
+    border: 1px solid rgba(184, 134, 30, 0.18);
+    border-radius: 10px;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    color: #f2ece0;
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+  }
+
+  .auth-input::placeholder {
+    color: rgba(230, 219, 200, 0.25);
+  }
+
+  .auth-input:focus {
+    outline: none;
+    border-color: rgba(184, 134, 30, 0.45);
+    box-shadow: 0 0 0 3px rgba(184, 134, 30, 0.1);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .slide-up {
+    animation: slideUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding:3rem 1.5rem;
+  min-height:calc(100vh - 144px);
+  position:relative;
+  overflow:hidden;
+">
+  <!-- Ambient glow -->
+  <div style="
+    position:absolute; top:30%; left:50%; transform:translateX(-50%);
+    width:500px; height:350px; border-radius:50%;
+    background:radial-gradient(ellipse, rgba(160,40,62,0.06), transparent 70%);
+    pointer-events:none;
+  "></div>
+
+  <div class="slide-up" style="
+    width:100%; max-width:440px;
+    background:rgba(16,14,11,0.9);
+    border:1px solid rgba(184,134,30,0.15);
+    border-radius:20px;
+    padding:2.5rem 2rem;
+    box-shadow:0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    position:relative;
+    overflow:hidden;
+  ">
+    <!-- Top decorative line -->
+    <div style="
+      position:absolute; top:0; left:2rem; right:2rem; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(184,134,30,0.4), transparent);
+    "></div>
+
+    <!-- Logo -->
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <a href="{{ url_for('landing') }}" style="text-decoration:none; display:inline-block;">
+        <div style="
+          font-family: var(--font-brand-stack, 'Great Vibes', cursive);
+          font-size:2.5rem;
+          background:linear-gradient(135deg, #e8c15a, #b8861e, #e8c15a);
+          -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+          background-clip:text; line-height:1.1;
+        ">Chefcito</div>
+      </a>
+    </div>
+
+    <!-- Benefits banner -->
+    <div style="
+      padding:1rem;
+      background:rgba(184,134,30,0.05);
+      border:1px solid rgba(184,134,30,0.12);
+      border-radius:12px;
+      margin-bottom:1.75rem;
+      display:flex; flex-direction:column; gap:0.6rem;
+    ">
+      {% for benefit in ['Recetas ilimitadas con IA', 'Historial de recetas guardado', 'Ajuste por número de personas']
+      %}
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <div style="
+          width:20px; height:20px; border-radius:50%;
+          background:rgba(184,134,30,0.1);
+          border:1px solid rgba(184,134,30,0.2);
+          display:flex; align-items:center; justify-content:center;
+          flex-shrink:0;
+        ">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="rgba(232,193,90,0.9)" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="2,6 5,9 10,3" />
+          </svg>
+        </div>
+        <span style="font-size:0.825rem; color:rgba(230,219,200,0.6); font-weight:400;">{{ benefit }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="text-align:center; margin-bottom:1.75rem;">
+      <h2 style="
+        font-family:'Cormorant Garamond',serif;
+        font-size:1.5rem; font-weight:600;
+        color:#f2ece0; margin-bottom:0.25rem;
+      ">Crea tu cuenta</h2>
+      <p style="font-size:0.825rem; color:rgba(230,219,200,0.35); font-weight:300;">Acceso gratuito, sin tarjeta de
+        crédito</p>
+    </div>
+
+    {% if error %}
+    <div style="
+      margin-bottom:1.25rem; padding:0.875rem 1rem;
+      border-radius:10px;
+      background:rgba(160,40,62,0.1);
+      border:1px solid rgba(160,40,62,0.25);
+      color:rgba(192,64,90,0.9);
+      font-size:0.825rem; font-weight:500;
+      display:flex; align-items:center; gap:0.625rem;
+    ">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ url_for('registro') }}" method="POST" style="display:flex; flex-direction:column; gap:1.1rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Nombre -->
+      <div>
+        <label
+          style="display:block; font-size:0.775rem; font-weight:600; color:rgba(230,219,200,0.55); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem;">Nombre</label>
+        <div style="position:relative;">
+          <div style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); pointer-events:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)"
+              stroke-width="1.75">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <input type="text" name="nombre" required autocomplete="name" value="{{ nombre_value or '' }}"
+            placeholder="Tu nombre" class="auth-input">
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label
+          style="display:block; font-size:0.775rem; font-weight:600; color:rgba(230,219,200,0.55); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem;">Correo
+          electrónico</label>
+        <div style="position:relative;">
+          <div style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); pointer-events:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)"
+              stroke-width="1.75">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+          </div>
+          <input type="email" name="email" required autocomplete="email" value="{{ email_value or '' }}"
+            placeholder="chef@ejemplo.com" class="auth-input">
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label
+          style="display:block; font-size:0.775rem; font-weight:600; color:rgba(230,219,200,0.55); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem;">Contraseña</label>
+        <div style="position:relative;">
+          <div style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); pointer-events:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)"
+              stroke-width="1.75">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <input type="password" id="reg-password" name="password" required minlength="6"
+            placeholder="Mínimo 6 caracteres" class="auth-input" style="padding-right:3rem;">
+          <button type="button" onclick="togglePassword('reg-password', this)" style="
+            position:absolute; right:1rem; top:50%; transform:translateY(-50%);
+            background:none; border:none; padding:0; cursor:pointer;
+            color:rgba(184,134,30,0.5); display:flex; align-items:center;
+            transition:color 0.2s;
+          " onmouseover="this.style.color='rgba(232,193,90,0.85)'"
+            onmouseout="this.style.color='rgba(184,134,30,0.5)'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" class="eye-open"></path>
+              <circle cx="12" cy="12" r="3" class="eye-open"></circle>
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                class="eye-closed" style="display:none;"></path>
+              <line x1="1" y1="1" x2="23" y2="23" class="eye-closed" style="display:none;"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirm password -->
+      <div>
+        <label
+          style="display:block; font-size:0.775rem; font-weight:600; color:rgba(230,219,200,0.55); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem;">Confirmar
+          contraseña</label>
+        <div style="position:relative;">
+          <div style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); pointer-events:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.5)"
+              stroke-width="1.75">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <input type="password" id="reg-password-confirm" name="password2" required minlength="6"
+            placeholder="Repite tu contraseña" class="auth-input" style="padding-right:3rem;">
+          <button type="button" onclick="togglePassword('reg-password-confirm', this)" style="
+            position:absolute; right:1rem; top:50%; transform:translateY(-50%);
+            background:none; border:none; padding:0; cursor:pointer;
+            color:rgba(184,134,30,0.5); display:flex; align-items:center;
+            transition:color 0.2s;
+          " onmouseover="this.style.color='rgba(232,193,90,0.85)'"
+            onmouseout="this.style.color='rgba(184,134,30,0.5)'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" class="eye-open"></path>
+              <circle cx="12" cy="12" r="3" class="eye-open"></circle>
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                class="eye-closed" style="display:none;"></path>
+              <line x1="1" y1="1" x2="23" y2="23" class="eye-closed" style="display:none;"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Términos y Condiciones -->
+      <div style="display:flex; align-items:flex-start; gap:0.55rem; margin-top:0.25rem;">
+        <input type="checkbox" name="terminos" id="chk-terminos" required
+          style="margin-top:0.2rem; cursor:pointer; accent-color:#d4a43a; width:16px; height:16px; flex-shrink:0;">
+        <label for="chk-terminos"
+          style="font-size:0.75rem; color:rgba(230,219,200,0.5); font-weight:300; line-height:1.5; cursor:pointer; margin:0;">
+          Confirmo que he leído y acepto los <a href="{{ url_for('terminos') }}" target="_blank"
+            style="color:#e8c15a; text-decoration:none; font-weight:500; transition:color 0.2s;"
+            onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#e8c15a'">Términos y Condiciones</a> y
+          la <a href="{{ url_for('privacidad') }}" target="_blank"
+            style="color:#e8c15a; text-decoration:none; font-weight:500; transition:color 0.2s;"
+            onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#e8c15a'">Política de Privacidad</a>.
+        </label>
+      </div>
+
+      <button type="submit" style="
+        width:100%; padding:0.9rem;
+        border:none; border-radius:10px;
+        font-family:'DM Sans',sans-serif;
+        font-size:0.9rem; font-weight:700;
+        color:#0c0b09; cursor:pointer;
+        background:linear-gradient(135deg, #d4a43a, #b8861e);
+        border:1px solid rgba(232,193,90,0.4);
+        box-shadow:0 4px 20px rgba(184,134,30,0.25);
+        transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        margin-top:0.25rem;
+      " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(184,134,30,0.4)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(184,134,30,0.25)'">
+        Crear mi cuenta gratis
+      </button>
+    </form>
+
+    <div style="
+      display:flex; align-items:center; gap:0.75rem;
+      margin:1.25rem 0 0;
+    ">
+      <div style="flex:1; height:1px; background:rgba(184,134,30,0.1);"></div>
+      <span style="font-size:0.75rem; color:rgba(230,219,200,0.25);">¿ya tienes cuenta?</span>
+      <div style="flex:1; height:1px; background:rgba(184,134,30,0.1);"></div>
+    </div>
+
+    <a href="{{ url_for('login') }}" style="
+      display:block; text-align:center; width:100%;
+      padding:0.875rem;
+      border-radius:10px;
+      font-family:'DM Sans',sans-serif;
+      font-size:0.875rem; font-weight:600;
+      color:rgba(230,219,200,0.7);
+      text-decoration:none;
+      background:rgba(20,18,15,0.5);
+      border:1px solid rgba(184,134,30,0.15);
+      transition:all 0.25s ease;
+      box-sizing:border-box;
+      margin-top:1rem;
+    " onmouseover="this.style.borderColor='rgba(184,134,30,0.35)';this.style.color='#e8c15a'"
+      onmouseout="this.style.borderColor='rgba(184,134,30,0.15)';this.style.color='rgba(230,219,200,0.7)'">
+      Iniciar sesión
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const eyesOpen = btn.querySelectorAll('.eye-open');
+    const eyesClosed = btn.querySelectorAll('.eye-closed');
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      eyesOpen.forEach(el => el.style.display = 'none');
+      eyesClosed.forEach(el => el.style.display = 'block');
+    } else {
+      input.type = 'password';
+      eyesOpen.forEach(el => el.style.display = 'block');
+      eyesClosed.forEach(el => el.style.display = 'none');
+    }
+  }
+</script>
+{% endblock %}

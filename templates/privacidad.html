@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Política de Privacidad — Chefcito{% endblock %}
+
+{% block extra_head %}
+<style>
+  .legal-container { max-width: 820px; margin: 0 auto; padding: 4rem 1.5rem 5rem; color: #f2ece0; }
+  .legal-header { text-align: center; margin-bottom: 3rem; }
+  .legal-header h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 600; margin-bottom: 0.8rem; color: #e8c15a; }
+  .legal-meta { color: rgba(230,219,200,0.5); font-size: 0.85rem; }
+  .legal-section { margin-bottom: 2.8rem; scroll-margin-top: 80px; }
+  .legal-section-number { display: inline-block; background: rgba(184,134,30,0.15); border: 1px solid rgba(184,134,30,0.4); color: rgba(232,193,90,0.9); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.7rem; border-radius: 100px; margin-bottom: 0.8rem; }
+  .legal-section h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #f2ece0; font-weight: 600; }
+  .legal-section p, .legal-section li { color: rgba(230,219,200,0.7); margin-bottom: 0.9rem; font-size: 0.95rem; line-height: 1.8; font-weight: 300; }
+  .legal-section ul, .legal-section ol { padding-left: 1.4rem; margin-bottom: 0.9rem; }
+  .highlight-box { background: rgba(184,134,30,0.05); border: 1px solid rgba(184,134,30,0.2); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.2rem 0; }
+  .highlight-box p { margin-bottom: 0; color: rgba(232,193,90,0.85); }
+  .data-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.88rem; }
+  .data-table th { background: rgba(184,134,30,0.1); color: #d4a43a; padding: 0.7rem 1rem; text-align: left; font-weight: 600; border-bottom: 1px solid rgba(184,134,30,0.3); }
+  .data-table td { padding: 0.65rem 1rem; border-bottom: 1px solid rgba(184,134,30,0.1); color: rgba(230,219,200,0.7); vertical-align: top; }
+  hr.legal-divider { border: none; border-top: 1px solid rgba(184,134,30,0.15); margin: 2rem 0; }
+  .legal-link { color: #d4a43a; text-decoration: none; transition: color 0.2s; }
+  .legal-link:hover { color: #f2ece0; text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="legal-container fade-up">
+  <div class="legal-header">
+    <div style="display:inline-block; background:rgba(184,134,30,0.1); border:1px solid rgba(184,134,30,0.25); color:rgba(232,193,90,0.85); font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; padding:0.3rem 0.9rem; border-radius:100px; margin-bottom:1.2rem;">Documento Legal</div>
+    <h1>Política de Privacidad</h1>
+    <p class="legal-meta">Última actualización: Enero 2026</p>
+  </div>
+
+  <div class="legal-section" id="responsable">
+    <span class="legal-section-number">01</span>
+    <h2>Responsable del Tratamiento</h2>
+    <p>Chefcito es responsable del tratamiento de sus datos personales recopilados a través de esta plataforma. Para cualquier consulta relacionada con su privacidad, puede contactarnos en <a href="mailto:chefcito527@gmail.com" class="legal-link">chefcito527@gmail.com</a>.</p>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="datos">
+    <span class="legal-section-number">02</span>
+    <h2>Datos que Recopilamos</h2>
+    <p>Recopilamos únicamente los datos necesarios para prestar el Servicio:</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Dato</th>
+          <th>Origen</th>
+          <th>Finalidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nombre y Correo electrónico</td>
+          <td>Registro voluntario</td>
+          <td>Personalización y autenticación</td>
+        </tr>
+        <tr>
+          <td>Contraseña (hash bcrypt)</td>
+          <td>Registro voluntario</td>
+          <td>Autenticación segura</td>
+        </tr>
+        <tr>
+          <td>Ingredientes ingresados</td>
+          <td>Uso del Servicio</td>
+          <td>Generación de recetas</td>
+        </tr>
+        <tr>
+          <td>Recetas generadas</td>
+          <td>Uso del Servicio</td>
+          <td>Historial del usuario y distribución/comercialización de la receta generada.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <p><strong>No almacenamos su API Key de Google Gemini.</strong> Esta se transmite directamente en cada solicitud cifrada desde su navegador y no se guarda en nuestra base de datos.</p>
+    </div>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="finalidad">
+    <span class="legal-section-number">03</span>
+    <h2>Finalidad del Tratamiento</h2>
+    <p>Sus datos se utilizan para gestionar su cuenta, generar recetas y mantener la seguridad del sistema. Las recetas generadas podrán ser recolectadas, analizadas o distribuidas por la plataforma en forma de estadísticas o comercialización pública, respetando el anonimato de su cuenta personal o datos sensibles en todo momento.</p>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="terceros-y-cookies">
+    <span class="legal-section-number">04</span>
+    <h2>Terceros, Publicidad y Cookies</h2>
+    <ul>
+      <li><strong>Terceros:</strong> Compartimos su prompt e ingredientes con <strong>Google Gemini API</strong> en tiempo real para generar las recetas. No vendemos sus datos de identificación a terceros, pero sí compartimos recetas generadas.</li>
+      <li><strong>Publicidad:</strong> Entiende que Chefcito puede usar plataformas de anuncios para financiarse. Algunas de estas plataformas manejan sus propias cookies para personalización.</li>
+      <li><strong>Cookies:</strong> Usamos una cookie técnica para mantener su sesión cifrada activa (necesaria).</li>
+    </ul>
+  </div>
+
+  <hr class="legal-divider" />
+
+  <div class="legal-section" id="contacto">
+    <span class="legal-section-number">05</span>
+    <h2>Contacto</h2>
+    <p>Para ejercer sus derechos o plantear sus dudas:</p>
+    <ul>
+      <li>Email: <a href="mailto:chefcito527@gmail.com" class="legal-link">chefcito527@gmail.com</a></li>
+    </ul>
+  </div>
+
+</div>
+{% endblock %}

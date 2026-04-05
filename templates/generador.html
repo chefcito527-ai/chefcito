@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+{% block title %}Generador de Recetas — Chefcito{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Modal & page styles ─────────────────── */
+  .chef-textarea {
+    width: 100%;
+    min-height: 140px;
+    background: rgba(12, 11, 9, 0.8);
+    border: 1px solid rgba(184, 134, 30, 0.18);
+    border-radius: 12px;
+    padding: 1.25rem;
+    color: #f2ece0;
+    font-size: 0.975rem;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.7;
+    resize: none;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+  }
+
+  .chef-textarea::placeholder {
+    color: rgba(230, 219, 200, 0.22);
+  }
+
+  .chef-textarea:focus {
+    outline: none;
+    border-color: rgba(184, 134, 30, 0.45);
+    box-shadow: 0 0 0 3px rgba(184, 134, 30, 0.08);
+  }
+
+  .counter-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(20, 18, 15, 0.8);
+    border: 1px solid rgba(184, 134, 30, 0.2);
+    color: rgba(230, 219, 200, 0.7);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .counter-btn:hover {
+    border-color: rgba(184, 134, 30, 0.45);
+    color: #e8c15a;
+  }
+
+  .counter-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  /* Spinner animation */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* Recipe card entrance */
+  @keyframes recipeReveal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  #tarjeta-receta {
+    animation: recipeReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Modal input */
+  .modal-input {
+    width: 100%;
+    background: rgba(12, 11, 9, 0.8);
+    border: 1px solid rgba(184, 134, 30, 0.18);
+    border-radius: 10px;
+    padding: 0.875rem 3rem 0.875rem 1rem;
+    color: #f2ece0;
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 0.85rem;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+  }
+
+  .modal-input:focus {
+    outline: none;
+    border-color: rgba(184, 134, 30, 0.45);
+    box-shadow: 0 0 0 3px rgba(184, 134, 30, 0.1);
+  }
+
+  .modal-input::placeholder {
+    color: rgba(230, 219, 200, 0.25);
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-up {
+    animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: Configurar API Key de Google Gemini
+══════════════════════════════════════════════════════ -->
+<div id="modal-apikey" style="
+  position:fixed; inset:0; z-index:50;
+  display:none;
+  align-items:center; justify-content:center;
+  padding:1rem;
+  background:rgba(5,4,3,0.8);
+  backdrop-filter:blur(12px);
+" aria-modal="true" role="dialog">
+
+  <div style="
+    width:100%; max-width:520px;
+    background:rgba(16,14,11,0.97);
+    border:1px solid rgba(184,134,30,0.2);
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 32px 80px rgba(0,0,0,0.6);
+    position:relative;
+  ">
+    <!-- Top accent line -->
+    <div style="height:2px; background:linear-gradient(90deg, transparent, rgba(184,134,30,0.6), transparent);"></div>
+
+    <!-- Header -->
+    <div style="padding:1.75rem 2rem 1.25rem; border-bottom:1px solid rgba(184,134,30,0.1);">
+      <div style="display:flex; align-items:center; gap:0.875rem;">
+        <div style="
+          width:40px; height:40px; border-radius:10px;
+          background:rgba(184,134,30,0.1);
+          border:1px solid rgba(184,134,30,0.2);
+          display:flex; align-items:center; justify-content:center;
+          flex-shrink:0;
+        ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(232,193,90,0.85)"
+            stroke-width="1.75">
+            <path
+              d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+          </svg>
+        </div>
+        <div>
+          <h2
+            style="font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:600; color:#f2ece0; margin:0 0 0.125rem;">
+            Configura tu API Key</h2>
+          <p style="font-size:0.75rem; color:rgba(230,219,200,0.35); font-weight:300; margin:0;">Se guarda solo en tu
+            navegador, nunca en nuestros servidores</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:1.5rem 2rem; max-height:55vh; overflow-y:auto;">
+
+      <!-- Info box -->
+      <div style="
+        padding:1rem;
+        background:rgba(184,134,30,0.05);
+        border:1px solid rgba(184,134,30,0.15);
+        border-radius:12px;
+        margin-bottom:1.5rem;
+      ">
+        <p style="font-size:0.825rem; color:rgba(230,219,200,0.5); line-height:1.7; font-weight:300; margin:0;">
+          Chefcito es un proyecto sin fines de lucro. Al usar tu propia clave de Google Gemini, cada usuario mantiene su
+          cuota personal de uso completamente gratuita.
+        </p>
+      </div>
+
+      <!-- Steps -->
+      <div style="margin-bottom:1.5rem;">
+        <p
+          style="font-size:0.7rem; color:rgba(184,134,30,0.6); text-transform:uppercase; letter-spacing:0.15em; font-weight:600; margin-bottom:0.875rem;">
+          Cómo obtener tu clave gratis</p>
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+          {% for step in [
+          ('1', 'Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank"
+            style="color:#d4a43a;font-weight:600;">aistudio.google.com/app/apikey</a> e inicia sesión con Google.'),
+          ('2', 'Haz clic en <strong style="color:#f2ece0;">Create API Key</strong> y selecciona o crea un proyecto.'),
+          ('3', 'Copia la clave generada (comienza con <code
+            style="background:rgba(12,11,9,0.8);color:#d4a43a;padding:0.1rem 0.35rem;border-radius:4px;font-family:monospace;font-size:0.8rem;">AIza...</code>)
+          y pégala abajo.')
+          ] %}
+          <div style="display:flex; gap:0.875rem; align-items:flex-start;">
+            <div style="
+              width:24px; height:24px; border-radius:6px;
+              background:rgba(184,134,30,0.1);
+              border:1px solid rgba(184,134,30,0.2);
+              display:flex; align-items:center; justify-content:center;
+              font-size:0.7rem; font-weight:700; color:rgba(184,134,30,0.8);
+              flex-shrink:0; margin-top:1px;
+              font-family:'DM Sans',sans-serif;
+            ">{{ step[0] }}</div>
+            <span style="font-size:0.825rem; color:rgba(230,219,200,0.5); line-height:1.65; font-weight:300;">{{ step[1]
+              | safe }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Input API Key -->
+      <div>
+        <label
+          style="display:block; font-size:0.7rem; font-weight:600; color:rgba(230,219,200,0.45); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem;">Tu
+          API Key de Google Gemini</label>
+        <div style="position:relative;">
+          <input type="password" id="input-apikey" autocomplete="off" spellcheck="false" placeholder="AIzaSy..."
+            class="modal-input">
+          <button id="btn-toggle-key" type="button" style="
+            position:absolute; right:1rem; top:50%; transform:translateY(-50%);
+            background:none; border:none; cursor:pointer;
+            color:rgba(230,219,200,0.3); transition:color 0.2s; padding:0;
+          " onmouseover="this.style.color='rgba(230,219,200,0.7)'"
+            onmouseout="this.style.color='rgba(230,219,200,0.3)'">
+            <svg id="icon-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <svg id="icon-hide" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          </button>
+        </div>
+        <!-- Error -->
+        <div id="apikey-error" style="display:none; align-items:center; gap:0.5rem; margin-top:0.5rem;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(192,64,90,0.9)" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span id="apikey-error-text" style="font-size:0.775rem; color:rgba(192,64,90,0.9); font-weight:500;"></span>
+        </div>
+        <p
+          style="margin-top:0.5rem; font-size:0.725rem; color:rgba(230,219,200,0.25); display:flex; align-items:center; gap:0.4rem; font-weight:300;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(74,222,128,0.6)" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Almacenada solo en tu navegador. Nunca la enviamos a servidores externos.
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer buttons -->
+    <div style="
+      padding:1.25rem 2rem;
+      border-top:1px solid rgba(184,134,30,0.1);
+      display:flex; gap:0.75rem;
+    ">
+      <button id="btn-apikey-cancelar" type="button" style="
+        flex:1; padding:0.8rem;
+        border-radius:10px;
+        background:rgba(20,18,15,0.5);
+        border:1px solid rgba(184,134,30,0.15);
+        color:rgba(230,219,200,0.55);
+        font-family:'DM Sans',sans-serif;
+        font-size:0.875rem; font-weight:600;
+        cursor:pointer;
+        transition:all 0.2s;
+      " onmouseover="this.style.borderColor='rgba(184,134,30,0.3)';this.style.color='rgba(230,219,200,0.8)'"
+        onmouseout="this.style.borderColor='rgba(184,134,30,0.15)';this.style.color='rgba(230,219,200,0.55)'">
+        Cancelar
+      </button>
+      <button id="btn-apikey-guardar" type="button" style="
+        flex:1; padding:0.8rem;
+        border-radius:10px;
+        background:linear-gradient(135deg, #d4a43a, #b8861e);
+        border:1px solid rgba(232,193,90,0.4);
+        color:#0c0b09;
+        font-family:'DM Sans',sans-serif;
+        font-size:0.875rem; font-weight:700;
+        cursor:pointer;
+        display:flex; align-items:center; justify-content:center; gap:0.5rem;
+        transition:all 0.25s;
+      " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(184,134,30,0.35)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        Guardar y usar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     CONTENIDO PRINCIPAL
+══════════════════════════════════════════════════════ -->
+<div
+  style="max-width:860px; width:100%; margin:0 auto; padding:3rem 1.5rem 4rem; flex:1; position:relative; z-index:1;">
+
+  <!-- Ambient glow -->
+  <div style="
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:600px; height:300px;
+    background:radial-gradient(ellipse, rgba(184,134,30,0.06), transparent 70%);
+    pointer-events:none;
+  "></div>
+
+  <!-- Header -->
+  <div class="fade-up" style="text-align:center; margin-bottom:3rem;">
+    <!-- Icon -->
+    <div style="
+      width:64px; height:64px; border-radius:50%;
+      background:rgba(184,134,30,0.08);
+      border:1px solid rgba(184,134,30,0.2);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 1.5rem;
+      box-shadow:0 8px 24px rgba(0,0,0,0.3);
+    ">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(232,193,90,0.85)" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path
+          d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+        <line x1="6" y1="17" x2="18" y2="17" />
+      </svg>
+    </div>
+
+    <h1 style="
+      font-family:'Cormorant Garamond',serif;
+      font-size:clamp(2.25rem,5vw,3.5rem);
+      font-weight:600;
+      color:#f2ece0;
+      line-height:1.15;
+      margin-bottom:0.875rem;
+    ">
+      ¿Qué hay en tu refri<em style="font-style:italic; color:rgba(232,193,90,0.85);">?</em>
+    </h1>
+    <p
+      style="font-size:0.975rem; color:rgba(230,219,200,0.4); font-weight:300; line-height:1.7; max-width:520px; margin:0 auto;">
+      Escribe los ingredientes que tienes a mano, separados por comas. Sin importar qué tan variados sean, la IA
+      encontrará la combinación perfecta.
+    </p>
+  </div>
+
+  <!-- Banner API key no configurada -->
+  <div id="banner-apikey" style="
+    display:none; align-items:center; justify-content:space-between; gap:1rem;
+    padding:1rem 1.25rem;
+    background:rgba(184,134,30,0.06);
+    border:1px solid rgba(184,134,30,0.2);
+    border-radius:12px;
+    margin-bottom:1.5rem;
+  ">
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(232,193,90,0.7)" stroke-width="1.75">
+        <path
+          d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      </svg>
+      <p style="font-size:0.825rem; color:rgba(232,193,90,0.75); font-weight:500; margin:0;">Configura tu API Key de
+        Gemini para generar recetas</p>
+    </div>
+    <button id="btn-abrir-modal-banner" type="button" style="
+      flex-shrink:0;
+      padding:0.45rem 1rem;
+      border-radius:8px;
+      background:rgba(184,134,30,0.12);
+      border:1px solid rgba(184,134,30,0.3);
+      color:rgba(232,193,90,0.85);
+      font-family:'DM Sans',sans-serif;
+      font-size:0.775rem; font-weight:700;
+      cursor:pointer; white-space:nowrap;
+      transition:all 0.2s;
+    " onmouseover="this.style.background='rgba(184,134,30,0.2)'"
+      onmouseout="this.style.background='rgba(184,134,30,0.12)'">
+      Configurar ahora
+    </button>
+  </div>
+
+  <!-- Main input card -->
+  <div style="
+    background:rgba(16,14,11,0.85);
+    border:1px solid rgba(184,134,30,0.15);
+    border-radius:18px;
+    padding:2rem;
+    margin-bottom:1.5rem;
+    box-shadow:0 16px 48px rgba(0,0,0,0.35);
+    position:relative;
+    overflow:hidden;
+  ">
+    <!-- Top accent -->
+    <div style="
+      position:absolute; top:0; left:2rem; right:2rem; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(184,134,30,0.25), transparent);
+    "></div>
+
+    <!-- Label + API key button -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.875rem;">
+      <label style="
+        display:flex; align-items:center; gap:0.5rem;
+        font-size:0.7rem; font-weight:700;
+        color:rgba(230,219,200,0.5);
+        text-transform:uppercase; letter-spacing:0.12em;
+      ">
+        <span style="width:6px; height:6px; border-radius:50%; background:#b8861e; flex-shrink:0;"></span>
+        Ingredientes disponibles
+      </label>
+      <button id="btn-abrir-modal" type="button" style="
+        display:flex; align-items:center; gap:0.4rem;
+        font-size:0.75rem; font-weight:600;
+        color:rgba(184,134,30,0.5);
+        background:none; border:1px solid transparent;
+        border-radius:6px; padding:0.35rem 0.75rem;
+        cursor:pointer; transition:all 0.2s;
+        font-family:'DM Sans',sans-serif;
+      " onmouseover="this.style.color='rgba(232,193,90,0.85)';this.style.borderColor='rgba(184,134,30,0.25)';this.style.background='rgba(184,134,30,0.06)'"
+        onmouseout="this.style.color='rgba(184,134,30,0.5)';this.style.borderColor='transparent';this.style.background='none'">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+        </svg>
+        <span id="label-apikey-estado">API Key</span>
+      </button>
+    </div>
+
+    <!-- Textarea -->
+    <div style="position:relative;">
+      <textarea id="input-ingredientes" class="chef-textarea"
+        placeholder="Ej: Pechuga de pollo, champiñones, arroz, cebolla morada, crema de leche, ajo..."></textarea>
+      <button id="btn-limpiar" type="button" style="
+        position:absolute; bottom:0.875rem; right:0.875rem;
+        padding:0.35rem 0.875rem;
+        border-radius:6px;
+        background:rgba(20,18,15,0.8);
+        border:1px solid rgba(184,134,30,0.12);
+        color:rgba(230,219,200,0.35);
+        font-family:'DM Sans',sans-serif;
+        font-size:0.725rem; font-weight:600;
+        cursor:pointer; transition:all 0.2s;
+      " onmouseover="this.style.color='rgba(230,219,200,0.7)';this.style.borderColor='rgba(184,134,30,0.25)'"
+        onmouseout="this.style.color='rgba(230,219,200,0.35)';this.style.borderColor='rgba(184,134,30,0.12)'">
+        Limpiar
+      </button>
+    </div>
+
+    <!-- Personas row -->
+    <div style="
+      margin-top:1.25rem;
+      padding:1rem 1.25rem;
+      background:rgba(12,11,9,0.5);
+      border:1px solid rgba(184,134,30,0.1);
+      border-radius:12px;
+      display:flex; flex-wrap:wrap; align-items:center; gap:1rem;
+    ">
+      <div style="display:flex; align-items:center; gap:0.625rem; flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.6)" stroke-width="1.75">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        <span style="font-size:0.8rem; font-weight:600; color:rgba(230,219,200,0.55);">Para cuántas personas</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.875rem; flex-shrink:0;">
+        <button type="button" id="btn-menos" class="counter-btn">−</button>
+        <span id="input-personas" style="
+          min-width:2rem; text-align:center;
+          font-family:'Cormorant Garamond',serif;
+          font-size:1.5rem; font-weight:600;
+          color:#e8c15a;
+        ">2</span>
+        <button type="button" id="btn-mas" class="counter-btn">+</button>
+      </div>
+      <span
+        style="font-size:0.75rem; color:rgba(230,219,200,0.25); font-weight:300; font-style:italic; margin-left:auto;">Las
+        cantidades se ajustan automáticamente</span>
+    </div>
+
+    <!-- Action row -->
+    <div
+      style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-top:1.5rem; gap:1rem;">
+      <span
+        style="font-size:0.75rem; color:rgba(230,219,200,0.25); display:flex; align-items:center; gap:0.5rem; font-weight:300;">
+        <kbd style="
+          padding:0.2rem 0.5rem;
+          background:rgba(12,11,9,0.8);
+          border:1px solid rgba(184,134,30,0.15);
+          border-radius:5px;
+          font-family:monospace;
+          font-size:0.7rem;
+          color:rgba(230,219,200,0.4);
+        ">Ctrl</kbd>
+        +
+        <kbd style="
+          padding:0.2rem 0.5rem;
+          background:rgba(12,11,9,0.8);
+          border:1px solid rgba(184,134,30,0.15);
+          border-radius:5px;
+          font-family:monospace;
+          font-size:0.7rem;
+          color:rgba(230,219,200,0.4);
+        ">Enter</kbd>
+        para generar
+      </span>
+      <button id="btn-cocinar" style="
+        display:flex; align-items:center; justify-content:center; gap:0.625rem;
+        padding:0.875rem 2rem;
+        border-radius:12px;
+        background:linear-gradient(135deg, #d4a43a, #b8861e);
+        border:1px solid rgba(232,193,90,0.4);
+        color:#0c0b09;
+        font-family:'DM Sans',sans-serif;
+        font-size:0.95rem; font-weight:700;
+        cursor:pointer;
+        box-shadow:0 4px 24px rgba(184,134,30,0.28);
+        transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        white-space:nowrap;
+      " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 36px rgba(184,134,30,0.45)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 24px rgba(184,134,30,0.28)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span id="texto-btn">Generar receta</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div id="banner-error" style="
+    display:none; align-items:flex-start; gap:0.875rem;
+    padding:1rem 1.25rem;
+    background:rgba(160,40,62,0.08);
+    border:1px solid rgba(160,40,62,0.2);
+    border-left:3px solid rgba(192,64,90,0.7);
+    border-radius:12px;
+    margin-bottom:1.5rem;
+  " role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(192,64,90,0.8)" stroke-width="2"
+      style="flex-shrink:0;margin-top:1px;">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <div>
+      <p id="texto-error" style="font-size:0.875rem; color:rgba(192,64,90,0.9); font-weight:500; margin:0;"></p>
+      <button id="btn-error-apikey" style="
+        display:none; margin-top:0.5rem;
+        background:none; border:none; padding:0;
+        font-family:'DM Sans',sans-serif;
+        font-size:0.775rem; font-weight:700;
+        color:rgba(192,64,90,0.7); cursor:pointer;
+        text-decoration:underline; text-underline-offset:2px;
+        transition:color 0.2s;
+      " onmouseover="this.style.color='rgba(192,64,90,1)'" onmouseout="this.style.color='rgba(192,64,90,0.7)'">
+        Configurar API Key
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="estado-carga" style="
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    padding:5rem 2rem; text-align:center;
+  ">
+    <div style="position:relative; width:64px; height:64px; margin-bottom:1.75rem;">
+      <div style="
+        position:absolute; inset:0; border-radius:50%;
+        border:2px solid rgba(184,134,30,0.1);
+      "></div>
+      <div style="
+        position:absolute; inset:0; border-radius:50%;
+        border:2px solid transparent;
+        border-top-color:rgba(184,134,30,0.7);
+      " class="spin"></div>
+      <div style="
+        position:absolute; inset:12px; border-radius:50%;
+        background:rgba(184,134,30,0.06);
+      "></div>
+      <div style="
+        position:absolute; inset:0;
+        display:flex; align-items:center; justify-content:center;
+      ">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(232,193,90,0.6)" stroke-width="1.5">
+          <path
+            d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+          <line x1="6" y1="17" x2="18" y2="17" />
+        </svg>
+      </div>
+    </div>
+    <h3
+      style="font-family:'Cormorant Garamond',serif; font-size:1.375rem; font-weight:600; color:#f2ece0; margin-bottom:0.5rem;">
+      El chef está trabajando...</h3>
+    <p style="font-size:0.875rem; color:rgba(230,219,200,0.35); font-weight:300;">Diseñando una receta perfecta con tus
+      ingredientes. Un momento.</p>
+  </div>
+
+  <!-- Recipe card -->
+  <article id="tarjeta-receta" style="
+    display:none;
+    background:rgba(16,14,11,0.9);
+    border:1px solid rgba(184,134,30,0.18);
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:1.5rem;
+    box-shadow:0 24px 64px rgba(0,0,0,0.4);
+  " aria-live="polite">
+
+    <!-- Recipe header -->
+    <header style="
+      padding:2.5rem 2rem 2rem;
+      background:linear-gradient(135deg, rgba(184,134,30,0.06) 0%, rgba(12,11,9,0.9) 100%);
+      border-bottom:1px solid rgba(184,134,30,0.1);
+      position:relative; overflow:hidden;
+    ">
+      <div style="
+        position:absolute; top:-40px; right:-40px;
+        width:200px; height:200px; border-radius:50%;
+        background:radial-gradient(ellipse, rgba(184,134,30,0.08), transparent 70%);
+        pointer-events:none;
+      "></div>
+
+      <!-- Badge -->
+      <div style="
+        display:inline-flex; align-items:center; gap:0.5rem;
+        padding:0.3rem 0.875rem;
+        background:rgba(184,134,30,0.08);
+        border:1px solid rgba(184,134,30,0.18);
+        border-radius:100px;
+        margin-bottom:1.25rem;
+      ">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="rgba(184,134,30,0.7)">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+        <span
+          style="font-size:0.65rem; font-weight:700; color:rgba(184,134,30,0.75); text-transform:uppercase; letter-spacing:0.1em;">Receta
+          Chefcito</span>
+      </div>
+
+      <h2 id="titulo-plato" style="
+        font-family:'Cormorant Garamond',serif;
+        font-size:clamp(1.75rem,4vw,2.5rem);
+        font-weight:600;
+        color:#f2ece0;
+        line-height:1.2;
+        margin-bottom:1.25rem;
+        position:relative;
+      "></h2>
+
+      <!-- Meta badges -->
+      <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+        <span id="etiqueta-dificultad" style="
+          display:inline-flex; align-items:center; gap:0.5rem;
+          padding:0.375rem 1rem;
+          background:rgba(12,11,9,0.6);
+          border:1px solid rgba(184,134,30,0.15);
+          border-radius:100px;
+          font-size:0.75rem; font-weight:600;
+          color:rgba(230,219,200,0.6);
+          text-transform:uppercase; letter-spacing:0.08em;
+        ">
+          <span style="width:6px; height:6px; border-radius:50%; background:#b8861e; flex-shrink:0;"></span>
+          <span></span>
+        </span>
+        <span style="
+          display:inline-flex; align-items:center; gap:0.5rem;
+          padding:0.375rem 1rem;
+          background:rgba(12,11,9,0.6);
+          border:1px solid rgba(184,134,30,0.15);
+          border-radius:100px;
+          font-size:0.75rem; font-weight:600;
+          color:rgba(230,219,200,0.6);
+          text-transform:uppercase; letter-spacing:0.08em;
+        ">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,30,0.7)" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span id="texto-tiempo"></span>
+        </span>
+      </div>
+    </header>
+
+    <!-- Recipe body -->
+    <div style="display:grid; grid-template-columns:1fr; gap:0;">
+
+      <!-- Ingredients -->
+      <div style="padding:2rem; border-bottom:1px solid rgba(184,134,30,0.08);">
+        <h3 style="
+          display:flex; align-items:center; gap:0.625rem;
+          font-size:0.7rem; font-weight:700;
+          color:rgba(184,134,30,0.65);
+          text-transform:uppercase; letter-spacing:0.15em;
+          margin-bottom:1.25rem;
+          font-family:'DM Sans',sans-serif;
+        ">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3h18v18H3zM12 8v8M8 12h8" />
+          </svg>
+          Ingredientes
+        </h3>
+        <ul id="lista-ingredientes" style="
+          display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+          gap:0.625rem; list-style:none; padding:0; margin:0;
+        "></ul>
+      </div>
+
+      <!-- Steps -->
+      <div style="padding:2rem;">
+        <h3 style="
+          display:flex; align-items:center; gap:0.625rem;
+          font-size:0.7rem; font-weight:700;
+          color:rgba(184,134,30,0.65);
+          text-transform:uppercase; letter-spacing:0.15em;
+          margin-bottom:1.5rem;
+          font-family:'DM Sans',sans-serif;
+        ">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+            <rect x="9" y="3" width="6" height="4" rx="1" />
+          </svg>
+          Preparación paso a paso
+        </h3>
+        <ol id="lista-pasos"
+          style="display:flex; flex-direction:column; gap:1.25rem; list-style:none; padding:0; margin:0;"></ol>
+      </div>
+    </div>
+
+    <!-- Recipe footer -->
+    <div style="
+      padding:1.25rem 2rem;
+      border-top:1px solid rgba(184,134,30,0.08);
+      background:rgba(12,11,9,0.4);
+      display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.875rem;
+    ">
+      <button id="btn-nueva-receta" style="
+        display:inline-flex; align-items:center; gap:0.5rem;
+        padding:0.7rem 1.25rem;
+        border-radius:10px;
+        background:rgba(20,18,15,0.6);
+        border:1px solid rgba(184,134,30,0.15);
+        color:rgba(230,219,200,0.6);
+        font-family:'DM Sans',sans-serif;
+        font-size:0.825rem; font-weight:600;
+        cursor:pointer; transition:all 0.2s;
+      " onmouseover="this.style.borderColor='rgba(184,134,30,0.3)';this.style.color='rgba(230,219,200,0.85)'"
+        onmouseout="this.style.borderColor='rgba(184,134,30,0.15)';this.style.color='rgba(230,219,200,0.6)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1 4 1 10 7 10" />
+          <path d="M3.51 15a9 9 0 1 0 .49-3.24" />
+        </svg>
+        Generar otra
+      </button>
+      <a href="{{ url_for('mis_recetas') }}" style="
+        display:inline-flex; align-items:center; gap:0.5rem;
+        padding:0.7rem 1.5rem;
+        border-radius:10px;
+        background:linear-gradient(135deg, #d4a43a, #b8861e);
+        border:1px solid rgba(232,193,90,0.4);
+        color:#0c0b09;
+        font-family:'DM Sans',sans-serif;
+        font-size:0.825rem; font-weight:700;
+        text-decoration:none;
+        box-shadow:0 4px 16px rgba(184,134,30,0.2);
+        transition:all 0.25s;
+      " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(184,134,30,0.35)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 16px rgba(184,134,30,0.2)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+        </svg>
+        Ver mis recetas
+      </a>
+    </div>
+  </article>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+<script>
+  // Inyectar estilos dinámicos para ingredientes y pasos desde app.js
+  window.RECIPE_STYLES = {
+    ingredientItem: `
+    display:flex; align-items:center; gap:0.625rem;
+    padding:0.5rem 0.75rem;
+    background:rgba(12,11,9,0.5);
+    border:1px solid rgba(184,134,30,0.1);
+    border-radius:8px;
+    font-size:0.875rem;
+    color:rgba(230,219,200,0.65);
+    font-family:'DM Sans',sans-serif;
+    font-weight:400;
+  `,
+    ingredientDot: `
+    width:5px; height:5px; border-radius:50%;
+    background:#b8861e; flex-shrink:0;
+  `,
+    stepItem: `
+    display:flex; gap:1rem; align-items:flex-start;
+  `,
+    stepNum: `
+    flex-shrink:0;
+    width:28px; height:28px; border-radius:8px;
+    background:rgba(184,134,30,0.1);
+    border:1px solid rgba(184,134,30,0.2);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond',serif;
+    font-size:0.875rem; font-weight:700;
+    color:rgba(184,134,30,0.8);
+    margin-top:2px;
+  `,
+    stepText: `
+    font-size:0.9rem;
+    color:rgba(230,219,200,0.6);
+    line-height:1.75;
+    font-weight:300;
+    font-family:'DM Sans',sans-serif;
+    padding-top:3px;
+  `
+  };
+</script>
+{% endblock %}
